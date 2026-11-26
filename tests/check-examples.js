@@ -52,14 +52,15 @@ for (const [name, make] of context.EXAMPLES) {
       }
       if (kind === "Hotspot") {
         const [x, y, w, h] = d.rect;
-        if (x < 0 || y < 0 || x + w > 1.0001 || y + h > 1.0001) fail(name, `${where} sticks out of the picture`);
+        if (!(w > 0 && h > 0)) fail(name, `${where} has no width or height`);
+        else if (x < 0 || y < 0 || x + w > 1.0001 || y + h > 1.0001) fail(name, `${where} sticks out of the picture`);
         checkJump(where, d.jump, s.duration);
       }
       if (kind === "ScoreCheck") { checkJump(`${where} (pass)`, d.pass, s.duration); checkJump(`${where} (fail)`, d.fail, s.duration); }
       if (kind === "Link" && !/^https?:\/\//.test(d.url)) fail(name, `${where} has a bad web address`);
     }
     for (const c of s.chapters) if (!(c.time >= 0 && c.time <= s.duration)) fail(name, `chapter "${c.title}" is outside "${s.name}"`);
-    for (const c of s.captions) if (!(c.start <= c.end && c.start >= 0)) fail(name, `caption "${c.text}" has bad times`);
+    for (const c of s.captions) if (!(c.start >= 0 && c.start <= c.end && c.end <= s.duration)) fail(name, `caption "${c.text}" is outside "${s.name}" or has bad times`);
   }
   console.log(`✓ ${name}: ${p.scenes.length} scene(s), ${p.scenes.reduce((n, s) => n + s.interactions.length, 0)} interaction(s)`);
 }

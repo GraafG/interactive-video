@@ -25,7 +25,9 @@ YouTube video.
   (`node tests/check-examples.js`), and the desktop program must build.
 - **CD** (`.github/workflows/pages.yml`) publishes `web/` to GitHub Pages when it
   changes on `main`, after the same web checks pass. Each release is stamped with a
-  version (shown in the app's menu) so browsers load the new files straight away.
+  version (shown in the app's menu), so once a browser has the new page it loads the
+  new files rather than cached ones. GitHub Pages lets browsers keep the page itself
+  for up to 10 minutes; a hard refresh (Ctrl+F5) fetches it at once.
 
 Lessons and results stay in each viewer's own browser; lessons move between devices
 and between the two apps as `.json` files.
