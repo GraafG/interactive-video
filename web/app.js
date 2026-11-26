@@ -30,6 +30,8 @@ const ICONS = {
   pause: '<svg viewBox="0 0 24 24"><path style="fill:currentColor;stroke:none" d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
   back: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
   full: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+  sound: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
+  mute: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
   watch: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>',
   edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>',
   map: '<svg viewBox="0 0 24 24"><rect x="2" y="9" width="6" height="6" rx="1.5"/><rect x="16" y="3" width="6" height="6" rx="1.5"/><rect x="16" y="15" width="6" height="6" rx="1.5"/><path d="M8 12h4m0 0V6h4m-4 6v6h4"/></svg>',
@@ -173,11 +175,25 @@ const media = {
       const now = performance.now();
       if (now - (m.lastPlay || 0) < 600) return; // the player takes a moment to start
       m.lastPlay = now;
-      m.yt.mute?.();
+      media.applySound(m);
       m.yt.playVideo?.();
     } else m.el.play().catch(() => {});
   },
   pause: (m) => (m.kind === "yt" ? m.yt.pauseVideo?.() : m.el.pause()),
+  /** Apply the viewer's sound setting (sound starts off: browsers only autoplay muted video). */
+  applySound(m) {
+    const { muted, volume } = state.sound;
+    const key = `${muted}|${volume}`;
+    if (m.soundKey === key) return;
+    m.soundKey = key;
+    if (m.kind === "yt") {
+      if (muted || volume === 0) m.yt.mute?.();
+      else { m.yt.unMute?.(); m.yt.setVolume?.(volume); }
+    } else {
+      m.el.muted = muted || volume === 0;
+      m.el.volume = volume / 100;
+    }
+  },
   rate(m, r) {
     if (m.kind === "yt") { if (m.rate !== r) { m.rate = r; m.yt.setPlaybackRate?.(r); } }
     else m.el.playbackRate = r;
@@ -428,6 +444,7 @@ const state = {
   selSession: 0,
   mapOffset: { x: 20, y: 20 },
   mapZoom: null,
+  sound: store.get("cq.sound", { muted: true, volume: 80 }),
 };
 
 function saveProject() { store.set("cq.project", state.project); renderTitle(); }
@@ -503,7 +520,7 @@ function openMenu(open) {
     h("div", { class: "seg" }, ...[["normal", "Normal"], ["large", "Large"], ["xl", "Extra large"]].map(([id, name]) =>
       h("button", { class: "btn" + (size === id ? " on" : ""), onclick: () => { textSize(id); openMenu(true); render(); } }, name))),
     h("h3", {}, "About"),
-    h("p", { class: "muted small" }, "Lessons, results and chosen videos stay in this browser. Videos always play muted."),
+    h("p", { class: "muted small" }, "Lessons, results and chosen videos stay in this browser. Sound starts off; use the speaker button under the video to turn it on."),
     h("p", { class: "muted small" }, "ClipQuest is a static web app: no server or account needed. Put this folder on any web host (https) and it works on phones too. YouTube videos need the page to be opened from a web address, not from a file."),
   );
 }
@@ -590,7 +607,28 @@ function renderWatch(main) {
     if (document.fullscreenElement) document.exitFullscreen();
     else (playerBox.requestFullscreen?.() ?? video.webkitEnterFullscreen?.());
   } }, icon("full"));
-  const controls = h("div", { class: "controls" }, seek, h("div", { class: "ctrl-row" }, playBtn, back, timeLabel, speed, cc, full));
+  // Sound: a speaker button (on/off) and a volume slider. The choice is remembered.
+  const soundOn = () => !state.sound.muted && state.sound.volume > 0;
+  const saveSound = () => { store.set("cq.sound", state.sound); showSound(); };
+  const soundBtn = h("button", { class: "icon-btn", onclick: () => {
+    state.sound.muted = soundOn();
+    if (!state.sound.muted && state.sound.volume === 0) state.sound.volume = 60;
+    saveSound();
+  } });
+  const volume = h("input", { type: "range", class: "volume", min: 0, max: 100, step: 5, "aria-label": "Volume", oninput: (e) => {
+    state.sound.volume = +e.target.value;
+    state.sound.muted = state.sound.volume === 0;
+    saveSound();
+  } });
+  function showSound() {
+    soundBtn.innerHTML = soundOn() ? ICONS.sound : ICONS.mute;
+    soundBtn.setAttribute("aria-label", soundOn() ? "Turn sound off" : "Turn sound on");
+    soundBtn.classList.toggle("off", !soundOn());
+    volume.value = soundOn() ? state.sound.volume : 0;
+  }
+  showSound();
+  const soundBox = h("div", { class: "sound" }, soundBtn, volume);
+  const controls = h("div", { class: "controls" }, seek, h("div", { class: "ctrl-row" }, playBtn, back, timeLabel, soundBox, speed, cc, full));
 
   const below = h("div", { class: "below-cards" });
   const side = h("aside", { class: "side" });
@@ -653,7 +691,7 @@ function renderWatch(main) {
         videoId: yt, width: "100%", height: "100%",
         playerVars: { controls: 0, playsinline: 1, mute: 1, rel: 0, disablekb: 1, fs: 0, iv_load_policy: 3, cc_load_policy: 0, start: Math.floor(clipStart(s) + pl.time) },
         events: {
-          onReady: (e) => { e.target.mute(); m.ready = true; canvas.hidden = true; e.target.seekTo(clipStart(pl.sceneObj) + pl.time, true); },
+          onReady: (e) => { e.target.mute(); m.soundKey = null; media.applySound(m); m.ready = true; canvas.hidden = true; e.target.seekTo(clipStart(pl.sceneObj) + pl.time, true); },
           onError: () => { if (pl.media === m) pl.media = null; explain(); toast("YouTube won't play this video here"); },
         },
       });
@@ -689,6 +727,7 @@ function renderWatch(main) {
     // keep the video element in step with the player
     if (pl.media?.ready) {
       const m = pl.media;
+      media.applySound(m);
       media.rate(m, pl.speed);
       if (pl.playing && media.paused(m) && !media.ended(m)) media.play(m);
       if (!pl.playing && !media.paused(m)) media.pause(m);
@@ -781,7 +820,7 @@ function renderWatch(main) {
         h("div", { class: "title" }, pl.p.title),
         pl.p.description ? h("div", { class: "desc" }, pl.p.description) : null,
         h("button", { class: "btn primary big", onclick: (e) => { e.stopPropagation(); pl.start(); refresh(); } }, icon("play"), "Start"),
-        h("div", { class: "small muted" }, "Videos play muted.")));
+        h("div", { class: "small muted" }, soundNote())));
       if (!isWide() && pl.p.description) below.append(h("p", { class: "muted" }, pl.p.description));
     }
     if (pl.finished) items.push(summaryCard());
@@ -801,6 +840,8 @@ function renderWatch(main) {
         h("button", { class: "btn", onclick: () => setTab("results") }, "See results")));
   }
 }
+
+const soundNote = () => (state.sound.muted || state.sound.volume === 0 ? "Sound is off: use the speaker button below to turn it on." : "Sound is on.");
 
 /** The card for a question, choice, open question or pause screen. */
 function questionCard(inter, refresh) {

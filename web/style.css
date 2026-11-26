@@ -245,13 +245,19 @@ main { padding: 0; }
 .play-btn { width: 3.5rem; height: 3.5rem; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
 .play-btn svg { width: 1.6rem; height: 1.6rem; fill: currentColor; stroke: none; }
 .play-btn[disabled] { background: #3a3f4c; color: #888; }
+.sound { display: flex; align-items: center; }
+.sound .icon-btn.off { color: var(--muted); }
+.sound .volume { width: 6rem; height: 2.75rem; }
 .ctrl-row select { width: auto; min-width: 4.2rem; padding: .4rem .5rem; }
 @media (max-width: 420px) {
-  .ctrl-row { gap: .2rem; }
-  .ctrl-row .icon-btn { width: 2.6rem; }
+  .ctrl-row { gap: .2rem; flex-wrap: wrap; }
+  .ctrl-row .icon-btn { width: 2.4rem; }
+  .ctrl-row select { display: none; } /* speed: on wider screens only */
+  .ctrl-row .btn { padding: .5rem .5rem; }
   .ctrl-row .btn { padding: .5rem .65rem; }
   .play-btn { width: 3.2rem; height: 3.2rem; }
-  .ctrl-row .time { font-size: .85rem; }
+  .ctrl-row .time { font-size: .78rem; padding-left: 0; }
+  .sound .volume { display: none; } /* phones: the speaker button, plus the phone's own volume keys */
 }
 
 .side { display: flex; flex-direction: column; gap: .4rem; background: var(--panel); border-radius: var(--radius); padding: .9rem; }
