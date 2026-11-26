@@ -1480,7 +1480,9 @@ function toStatements(sessions) {
 function boot() {
   textSize(store.get("cq.textsize", "large"));
   const saved = store.get("cq.project", null);
-  state.project = saved && Array.isArray(saved.scenes) && saved.scenes.length ? saved : EXAMPLES[0][1]();
+  // First visit: open the story-map demo (the branching YouTube lesson).
+  const firstDemo = EXAMPLES.find(([name]) => name.startsWith("Story map demo")) || EXAMPLES[0];
+  state.project = saved && Array.isArray(saved.scenes) && saved.scenes.length ? saved : firstDemo[1]();
   state.selScene = state.project.start_scene;
   state.player = new Player(state.project, state.learner);
 
