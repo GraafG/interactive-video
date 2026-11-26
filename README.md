@@ -18,6 +18,17 @@ YouTube video.
   `rust-toolchain.toml` pins the GNU toolchain used on the machine it was built on;
   remove it to build with your default toolchain.
 
+### CI/CD
+
+- **CI** (`.github/workflows/ci.yml`) runs on every pull request and push to `main`:
+  the web app's code must parse, every example lesson must hold together
+  (`node tests/check-examples.js`), and the desktop program must build.
+- **CD** (`.github/workflows/pages.yml`) publishes `web/` to GitHub Pages when it
+  changes on `main`, after the same web checks pass. Each release is stamped with a
+  version (shown in the app's menu), so once a browser has the new page it loads the
+  new files rather than cached ones. GitHub Pages lets browsers keep the page itself
+  for up to 10 minutes; a hard refresh (Ctrl+F5) fetches it at once.
+
 Lessons and results stay in each viewer's own browser; lessons move between devices
 and between the two apps as `.json` files.
 
