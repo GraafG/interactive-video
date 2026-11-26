@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#15171d">
+  <!-- The deploy replaces dev-build with the release version, so browsers fetch fresh files. -->
+  <meta name="clipquest-version" content="dev-build">
   <title>ClipQuest — interactive video</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=dev-build">
 </head>
 <body>
   <header class="topbar">
@@ -28,7 +30,7 @@
   <input type="file" id="video-file" accept="video/*" hidden>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="examples.js"></script>
-  <script src="app.js"></script>
+  <script src="examples.js?v=dev-build"></script>
+  <script src="app.js?v=dev-build"></script>
 </body>
 </html>

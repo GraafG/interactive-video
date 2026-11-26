@@ -1,10 +1,12 @@
-# Publishes the static ClipQuest web app (web/) to GitHub Pages on every push to main.
+# CD: publishes the static ClipQuest web app (web/) to GitHub Pages on every push to
+# main that changes it. The same checks as CI run first; nothing is published if they
+# fail. Each release is stamped with a version so browsers fetch the new files.
 name: Deploy web app to GitHub Pages
 
 on:
   push:
     branches: [main]
-    paths: ["web/**", ".github/workflows/pages.yml"]
+    paths: ["web/**", "tests/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -17,13 +19,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check:
+    name: Check before publishing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the web app's code
+        run: for f in web/*.js tests/*.js; do node --check "$f"; done
+      - name: Check every example lesson
+        run: node tests/check-examples.js
+
   deploy:
+    name: Publish
+    needs: check
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp the version
+        # index.html links style.css, examples.js and app.js with ?v=dev-build; a new
+        # value per release makes browsers load the new files instead of cached ones.
+        run: |
+          version="$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}"
+          sed -i "s/dev-build/${version}/g" web/index.html
+          echo "Publishing version ${version}"
+          grep -c "${version}" web/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

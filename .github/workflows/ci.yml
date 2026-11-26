@@ -1,0 +1,50 @@
+# CI: checks every pull request and every push to main.
+# - web: the web app's code parses and every example lesson holds together
+# - desktop: the Rust desktop program builds
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web app checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the web app's code
+        run: for f in web/*.js tests/*.js; do node --check "$f"; done
+      - name: Check every example lesson
+        run: node tests/check-examples.js
+
+  desktop:
+    name: Desktop build
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    env:
+      # rust-toolchain.toml pins the GNU toolchain used on the author's PC;
+      # the runner builds with the standard (MSVC) toolchain instead.
+      RUSTUP_TOOLCHAIN: stable
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+      - name: Build
+        run: cargo build --locked

@@ -521,6 +521,7 @@ function openMenu(open) {
       h("button", { class: "btn" + (size === id ? " on" : ""), onclick: () => { textSize(id); openMenu(true); render(); } }, name))),
     h("h3", {}, "About"),
     h("p", { class: "muted small" }, "Lessons, results and chosen videos stay in this browser. Sound starts off; use the speaker button under the video to turn it on."),
+    h("p", { class: "muted small" }, `Version ${document.querySelector('meta[name="clipquest-version"]')?.content || "dev-build"}`),
     h("p", { class: "muted small" }, "ClipQuest is a static web app: no server or account needed. Put this folder on any web host (https) and it works on phones too. YouTube videos need the page to be opened from a web address, not from a file."),
   );
 }
