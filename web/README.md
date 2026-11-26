@@ -45,5 +45,7 @@ Only add a server if you need these:
 ## Outside services it uses
 
 - YouTube's embedded player (`youtube.com/iframe_api`) and YouTube thumbnails
-  (`i.ytimg.com`), only for lessons with YouTube videos. Videos always play muted.
+  (`i.ytimg.com`), only for lessons with YouTube videos. Sound starts off (browsers only
+  start videos by themselves when muted); the speaker button and volume slider under the
+  video turn it on, and the choice is remembered.
 - Nothing else: no analytics, no fonts or scripts from other sites.
