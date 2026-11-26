@@ -638,7 +638,9 @@ function renderWatch(main) {
       const m = { kind: "yt", yt: null, ready: false };
       pl.media = m;
       const explain = () => {
-        if (m.ready || pl.media !== m) return;
+        if (m.ready || pl.media !== m || ytHost.querySelector(".yt-note")) return;
+        // Only explain once the lesson is playing; before that the start screen is up.
+        if (!pl.started) { setTimeout(explain, 3000); return; }
         const fromFile = location.protocol === "file:";
         ytHost.append(h("div", { class: "yt-note" },
           fromFile
@@ -646,7 +648,7 @@ function renderWatch(main) {
             : "YouTube didn't load. Check the internet connection, or watch it on YouTube.",
           h("a", { class: "btn", href: `https://www.youtube.com/watch?v=${yt}`, target: "_blank", rel: "noopener" }, "Watch on YouTube ↗")));
       };
-      setTimeout(explain, 8000);
+      setTimeout(explain, 12000);
       m.yt = new YT.Player(slot, {
         videoId: yt, width: "100%", height: "100%",
         playerVars: { controls: 0, playsinline: 1, mute: 1, rel: 0, disablekb: 1, fs: 0, iv_load_policy: 3, cc_load_policy: 0, start: Math.floor(clipStart(s) + pl.time) },
