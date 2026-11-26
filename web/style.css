@@ -132,6 +132,19 @@ main { padding: 0; }
 }
 .toast.show { opacity: 1; }
 
+/* ---------- demo switcher ---------- */
+.demo-bar {
+  display: flex; gap: .45rem; align-items: center; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  padding: .1rem 0 .7rem; scrollbar-width: none;
+}
+.demo-bar::-webkit-scrollbar { display: none; }
+.demo-label { color: var(--muted); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; flex: none; }
+.demo-chip {
+  flex: none; min-height: 2.6rem; padding: .4rem .95rem; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel-2); white-space: nowrap;
+}
+.demo-chip.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+
 /* ---------- player ---------- */
 .watch { display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr); }
 .player {

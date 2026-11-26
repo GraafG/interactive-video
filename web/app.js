@@ -41,7 +41,9 @@ const icon = (name) => h("span", { html: ICONS[name], style: { display: "content
 
 function fmtTime(t) {
   t = Math.max(0, Math.floor(t || 0));
-  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+  const ss = String(t % 60).padStart(2, "0");
+  if (t >= 3600) return `${Math.floor(t / 3600)}:${String(Math.floor(t / 60) % 60).padStart(2, "0")}:${ss}`;
+  return `${Math.floor(t / 60)}:${ss}`;
 }
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const trim = (s, n) => (s.length > n ? s.slice(0, n) + "…" : s);
@@ -633,7 +635,7 @@ function renderWatch(main) {
 
   const below = h("div", { class: "below-cards" });
   const side = h("aside", { class: "side" });
-  main.append(h("div", { class: "page" }, h("div", { class: "watch" }, h("div", { class: "stack" }, playerBox, controls, below), side)));
+  main.append(h("div", { class: "page" }, demoBar(), h("div", { class: "watch" }, h("div", { class: "stack" }, playerBox, controls, below), side)));
 
   // keyboard
   const onKey = (e) => {
@@ -693,7 +695,7 @@ function renderWatch(main) {
         playerVars: { controls: 0, playsinline: 1, mute: 1, rel: 0, disablekb: 1, fs: 0, iv_load_policy: 3, cc_load_policy: 0, start: Math.floor(clipStart(s) + pl.time) },
         events: {
           onReady: (e) => { e.target.mute(); m.soundKey = null; media.applySound(m); m.ready = true; canvas.hidden = true; e.target.seekTo(clipStart(pl.sceneObj) + pl.time, true); },
-          onError: () => { if (pl.media === m) pl.media = null; explain(); toast("YouTube won't play this video here"); },
+          onError: () => { if (pl.media === m) pl.media = null; ytHost.querySelector("iframe")?.remove(); explain(); toast("YouTube won't play this video here"); },
         },
       });
       return;
@@ -840,6 +842,30 @@ function renderWatch(main) {
         h("button", { class: "btn primary", onclick: () => { newPlayer(); state.player.start(); render(); } }, "Watch again"),
         h("button", { class: "btn", onclick: () => setTab("results") }, "See results")));
   }
+}
+
+// The demos, real-video ones first, as a row of buttons above the player.
+const DEMO_ORDER = ["Story map demo: AMD routes", "GPU black market: investigation map", "Smoothie recipes", "Video demo: AMD and gamers", "Lab safety quiz", "Choose your path", "Product tour"];
+const DEMO_LABELS = { "Story map demo: AMD routes": "AMD routes", "GPU black market: investigation map": "GPU black market", "Video demo: AMD and gamers": "AMD and gamers" };
+
+function demoBar() {
+  const names = [...DEMO_ORDER.filter((n) => EXAMPLES.some(([e]) => e === n)), ...EXAMPLES.map(([e]) => e).filter((n) => !DEMO_ORDER.includes(n))];
+  const current = state.project.title;
+  const own = !names.includes(current);
+  return h("nav", { class: "demo-bar", "aria-label": "Demos" },
+    h("span", { class: "demo-label" }, "Demos"),
+    own ? h("button", { class: "demo-chip on", "aria-current": "true" }, trim(current, 24)) : null,
+    ...names.map((name) => h("button", { class: "demo-chip" + (name === current ? " on" : ""), "aria-current": name === current ? "true" : null, onclick: () => switchDemo(name) }, DEMO_LABELS[name] || name)));
+}
+
+function switchDemo(name) {
+  if (name === state.project.title) return;
+  const ex = EXAMPLES.find(([n]) => n === name);
+  if (!ex) return;
+  const own = !EXAMPLES.some(([n]) => n === state.project.title);
+  if (own && !confirm(`Switch to the "${name}" demo?\n\nYour lesson "${state.project.title}" is only kept if you saved it as a file (Menu → Save lesson as a file).`)) return;
+  loadProject(ex[1]());
+  setTab("watch");
 }
 
 const soundNote = () => (state.sound.muted || state.sound.volume === 0 ? "Sound is off: use the speaker button below to turn it on." : "Sound is on.");
